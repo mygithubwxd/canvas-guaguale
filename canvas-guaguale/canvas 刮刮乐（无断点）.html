@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+
+        canvas{
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 200px 200px;
+        }
+    
+    </style>
+</head>
+<body>
+    <canvas width="300" height=300 id="canvas"></canvas>
+    <script>
+        
+        var oCanvas = document.getElementById('canvas'); //画布
+        var ctx = oCanvas.getContext('2d'); //画笔
+        var w = oCanvas.width;
+        var h = oCanvas.height;
+        var lastPoint = {};
+        var nowPoint = {};
+        var lastPointX,lastPointY;
+        var nowPointX, nowPointY;
+
+        init();//入口函数，初始化
+
+        function init() {
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(0, 0, w, h);
+
+            var r = Math.random(),
+                oImg = new Image();  //new一个Image对象
+
+            if(r < 0.5) {
+                oImg.src = './baozou1.png';
+            }else {
+                oImg.src = './baozou2.jpg';
+            }
+
+            oImg.onload = function () {
+                oCanvas.style.backgroundImage = 'url('+ oImg.src +')'; //背景图片
+                ctx.globalCompositeOperation = 'destination-out';  //合成方式 destination-out
+                //灰色蒙层与鼠标画出的圆与直线合成，从而露出背景图片
+                document.addEventListener('mousedown', downFun, false); 
+            }
+        }
+
+        function downFun(e) {
+            lastPointX = e.clientX - oCanvas.offsetLeft;  //相对于画布
+            lastPointY = e.clientY - oCanvas.offsetTop;
+            oCanvas.addEventListener('mousemove', moveFun, false);
+            document.addEventListener('mouseup', upFun, false);
+        } 
+        function moveFun(e) {
+            nowPointX = e.clientX - oCanvas.offsetLeft;  //相对于画布
+            nowPointY = e.clientY - oCanvas.offsetTop;
+            ctx.beginPath();
+            ctx.fillStyle = 'transpatent';   //画笔颜色，透明色
+            //此处颜色随便，因为两种颜色会抵消，然后就可以看到下面的背景图片
+            ctx.lineWidth = 40;  // 线宽
+            ctx.moveTo(lastPointX, lastPointY);
+            ctx.lineTo(nowPointX, nowPointY);  //两点直接画线，防止滑动速度过快出现断点
+            ctx.stroke();
+            ctx.arc(nowPointX, nowPointY, 20, 0, Math.PI*2, 0);  //画圆
+            ctx.closePath();
+            ctx.fill();
+
+            lastPointX = nowPointX;  //当前点作为前一个点  （鼠标拖拽小球作碰撞运动，计算x y轴方向的加速度）
+            lastPointY = nowPointY;  
+        }
+        function upFun() {
+            oCanvas.removeEventListener('mousemove', moveFun, false);
+            document.removeEventListener('mouseup', upFun, false);
+            clearAll();   //鼠标抬起判断是否清除画布
+        }
+        // 当刮的区域超过70%时，显示所有
+        function clearAll() {
+            var d = ctx.getImageData(0,0,w,h),
+                c = 0,
+                len = d.data.length;  // 4个设备像素显示一个css像素rgba
+            for(var i = 3; i < len; i += 4) { 
+                if(d.data[i] === 0) {  //rgba a===0  a表示透明度）
+                    c++; // 计数透明度为0的css像素的个数
+                }
+            }
+            if(c > w*h*0.7) { 
+                ctx.clearRect(0, 0, w, h); //擦除整个矩形
+            }
+        }
+
+
+    
+    
+    
+    
+    
+    </script>
+</body>
+</html>
